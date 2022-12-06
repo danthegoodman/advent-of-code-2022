@@ -4,13 +4,34 @@ import {fileURLToPath} from "url";
 import {readFileSync, writeFileSync} from "fs";
 
 type AocResult = string | number | null | undefined;
-type AocTestFn = (input: string) => AocResult;
-type AocExample = [string, string | number, string | number];
-type AocTest = {
-  solveA: AocTestFn | null
-  solveB: AocTestFn | null
-}
 
+/**
+ * If the test returns null or undefined, it is assumed to be incomplete.
+ * Otherwise, the output is normalized into a string format for output comparison.
+ */
+type AocTestFn = (input: string) => AocResult;
+
+/**
+ * Either expectation may be nullish. If so, the example is not run for that
+ * part. Useful if the second part does not reuse the first part's example.
+ */
+type AocExample = [input: string, expectedA: AocResult, expectedB: AocResult];
+type AocTest = { solveA: AocTestFn; solveB: AocTestFn; }
+
+/**
+ * Defines a test suite for running an Advent of Code challenge.
+ *
+ * The use of the importMetaUrl a code template to be copy & pasted into each
+ * day's challenge. Only the day number is extracted from it.
+ *
+ * Any number of examples may be given. If an example's result for a part is
+ * nullish, then that example will not be run for that part. All examples
+ * for a day must pass before the actual input will be executed.
+ *
+ * When executing against the real input, the result will be cached to the file
+ * system. Subsequent runs will compare the output to the previous result and
+ * will report if it has changed.
+ */
 export async function aocTest(importMetaUrl: string, opts: AocTest, ...examples: AocExample[]) {
   const testId = basename(dirname(fileURLToPath(importMetaUrl)));
   const dataDir = dirname(dirname(fileURLToPath(import.meta.url))) + "/data";
@@ -19,8 +40,6 @@ export async function aocTest(importMetaUrl: string, opts: AocTest, ...examples:
   const solvers = [["A", opts.solveA], ["B", opts.solveB]] as const;
 
   for (const [name, solver] of solvers) {
-    if (!solver) continue;
-
     let passed = true;
     for (const [n, ex] of examples.entries()) {
       passed &&= runExample(name, n, solver, ex);
@@ -53,8 +72,11 @@ function maybeReadFile(filename: string): string | null {
 }
 
 function runExample(part: 'A' | 'B', n: number, solver: AocTestFn, ex: AocExample): boolean {
+  const expected = part === 'A' ? ex[1] : ex[2]
+  if(expected == null) return true;
+
   const actual = solver(ex[0]);
-  const expected = String(part === 'A' ? ex[1] : ex[2]);
+  const expStr = String(expected);
 
   let message: string;
   let color: (s:string)=>string;
@@ -63,11 +85,11 @@ function runExample(part: 'A' | 'B', n: number, solver: AocTestFn, ex: AocExampl
     color = chalk.redBright;
   } else {
     const actStr = String(actual)
-    if (actStr === expected) {
+    if (actStr === expStr) {
       message = "✅ "
       color = chalk.green;
     } else {
-      message = "\n   actual: " + actual + "\n expected: " + expected;
+      message = "\n   actual: " + actual + "\n expected: " + ex;
       color = chalk.red;
     }
   }
