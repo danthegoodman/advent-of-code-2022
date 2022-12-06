@@ -1,9 +1,6 @@
-import * as assert from 'assert';
-import {readInput} from "../util/read-input.js";
+import {aocTest} from "../util/aoc-test.js";
 
-function main(){
-  const input = readInput(import.meta.url)
-  const example = `
+const example = `
 1000
 2000
 3000
@@ -19,12 +16,11 @@ function main(){
 
 10000`
 
-  assert.strictEqual(24000, solveA(example))
-  assert.strictEqual(70369, solveA(input))
-
-  assert.strictEqual(45000, solveB(example))
-  assert.strictEqual(203002, solveB(input))
-}
+await aocTest(
+  import.meta.url,
+  {solveA, solveB},
+  [example, 24000, 45000],
+);
 
 function solveA(input: string): number {
   let groups = input.trim().split('\n\n');
@@ -44,5 +40,3 @@ function solveB(input: string): number {
   sums.sort((a,b)=> a-b);
   return sums.slice(-3).reduce((a,b)=>a+b,0);
 }
-
-main()

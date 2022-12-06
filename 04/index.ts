@@ -1,24 +1,17 @@
-import {readInput} from "../util/read-input.js";
-import * as assert from 'assert';
+import {aocTest} from "../util/aoc-test.js";
 
-function main() {
-  const input = readInput(import.meta.url);
-  const example = `\
+const example = `\
 2-4,6-8
 2-3,4-5
 5-7,7-9
 2-8,3-7
 6-6,4-6
 2-6,4-8`;
-
-  assert.strictEqual(2, solveA(example));
-  assert.strictEqual(507, solveA(input));
-
-  assert.strictEqual(4, solveB(example));
-  assert.strictEqual(897, solveB(input));
-}
-
-main();
+await aocTest(
+  import.meta.url,
+  {solveA, solveB},
+  [example, 2, 4],
+);
 
 function solveA(input: string) {
   const data = input.split('\n').map(it=>it.match(/\d+/g)!.map(Number));

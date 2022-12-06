@@ -1,10 +1,7 @@
-import {readInput} from "../util/read-input.js";
-import * as assert from 'assert';
 import _ from "lodash";
+import {aocTest} from "../util/aoc-test.js";
 
-function main() {
-  const input = readInput(import.meta.url);
-  const example = `\
+const example = `\
 vJrwpWtwJgWrhcsFMMfFFhFp
 jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
 PmmdzqPrVvPwwTWBwg
@@ -12,14 +9,12 @@ wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn
 ttgJtRGJQctTZtZT
 CrZsJsPPZsGzwwsLwLmpwMDw`;
 
-  assert.strictEqual(157, solveA(example));
-  assert.strictEqual(7701, solveA(input));
 
-  assert.strictEqual(70, solveB(example));
-  assert.strictEqual(2644, solveB(input));
-}
-
-main();
+await aocTest(
+  import.meta.url,
+  {solveA, solveB},
+  [example, 157, 70],
+);
 
 function solveA(input: string) {
   const lines = input.split('\n');

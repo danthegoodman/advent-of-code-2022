@@ -1,9 +1,6 @@
-import {readInput} from "../util/read-input.js";
-import * as assert from 'assert';
+import {aocTest} from "../util/aoc-test.js";
 
-function main() {
-  const input = readInput(import.meta.url);
-  const example = `\
+const example = `\
     [D]    
 [N] [C]    
 [Z] [M] [P]
@@ -14,14 +11,11 @@ move 3 from 1 to 3
 move 2 from 2 to 1
 move 1 from 1 to 2`;
 
-  assert.strictEqual("CMZ", solveA(example));
-  assert.strictEqual("SVFDLGLWV", solveA(input));
-
-  assert.strictEqual("MCD", solveB(example));
-  assert.strictEqual("DCVTCVPCL", solveB(input));
-}
-
-main();
+await aocTest(
+  import.meta.url,
+  {solveA, solveB},
+  [example, "CMZ", "MCD"],
+);
 
 function solveA(input: string) {
   const {state, moves} = parseInput(input);

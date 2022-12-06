@@ -1,5 +1,5 @@
 .idea/
 KEYS.sh
 node_modules/
-input.txt
+data/
 *.js
