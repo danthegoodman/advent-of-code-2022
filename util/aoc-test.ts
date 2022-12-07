@@ -89,7 +89,7 @@ function runExample(part: 'A' | 'B', n: number, solver: AocTestFn, ex: AocExampl
       message = "✅ "
       color = chalk.green;
     } else {
-      message = "\n   actual: " + actual + "\n expected: " + ex;
+      message = "\n   actual: " + actual + "\n expected: " + expStr;
       color = chalk.red;
     }
   }
