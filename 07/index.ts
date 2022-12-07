@@ -31,148 +31,81 @@ await aocTest(
   [example, 95437, 24933642],
 )
 
-function solveA(input: string) {
-  const lines = input.split('\n');
-  let cwd: string[] = [];
-  let listing = false;
-  type Tree = Map<string, Tree | number>;
-  const tree: Tree = new Map();
-  function treeGetCwd(){
-    let t = tree;
-    for(const part of cwd){
-      t = t.get(part) as Tree
-    }
-    return t;
-  }
+type Tree = Map<string, Tree | number>;
 
+function getTreeFromInput(input: string): Tree {
+  const lines = input.split('\n');
+  const root: Tree = new Map();
+
+  const treeStack = [root];
   for(let ln of lines){
     if(ln[0] === '$'){
-      const cmd = ln.slice(2)
-      if(cmd === 'ls'){
-        listing = true;
-      } else {
-        const newPlace = cmd.split(' ')[1];
-        if(newPlace === '..'){
-          cwd.pop();
-        } else if(newPlace === '/'){
-          cwd.splice(0, cwd.length);
+      const [cmd, arg] = ln.slice(2).split(' ');
+      if(cmd === 'cd'){
+        if(arg === '..'){
+          treeStack.pop();
+        } else if(arg === '/'){
+          treeStack.splice(0, treeStack.length, root);
         } else {
-          cwd.push(newPlace);
+          let nextTree = treeStack.at(-1)!.get(arg);
+          if(!(nextTree instanceof Map)) throw `expected traversal into dir at ${arg}`
+          treeStack.push(nextTree);
         }
-      }
-    } else if(listing){
-      const [size, name] = ln.split(' ');
-      if(size === 'dir'){
-        treeGetCwd().set(name, new Map())
-      } else {
-        treeGetCwd().set(name, Number(size))
       }
     } else {
-      throw 'bad state'
+      const [size, name] = ln.split(' ');
+      if(size === 'dir'){
+        treeStack.at(-1)!.set(name, new Map())
+      } else {
+        treeStack.at(-1)!.set(name, Number(size))
+      }
     }
   }
 
-  function sumSubFiles(tree: Tree): number{
-    let size = 0;
-    for(let y of tree.values()){
-      if(typeof y === 'number'){
-        size += y;
-      } else {
-        size += sumSubFiles(y);
-      }
+  return root;
+}
+
+function sumSubFiles(tree: Tree): number {
+  let size = 0;
+  for(let y of tree.values()){
+    if(typeof y === 'number'){
+      size += y;
+    } else {
+      size += sumSubFiles(y);
     }
-    return size;
   }
-  function* iterSizes(path: string, tree: Tree): Iterable<[string, number]>{
-    for(let [x, y] of tree){
-      if(typeof y !== 'number'){
-        for(let sub of iterSizes(path + '/' + x, y)){
-          yield sub;
-        }
-      }
-    }
-    yield [path, sumSubFiles(tree)];
+  return size;
+}
+
+function* iterSizes(tree: Tree): Iterable<number>{
+  for(let y of tree.values()){
+    if(typeof y === 'number') continue;
+    yield* iterSizes(y);
   }
+  yield sumSubFiles(tree);
+}
+
+function solveA(input: string) {
+  const tree = getTreeFromInput(input);
 
   let result = 0;
-  for(let [,size] of iterSizes('', tree)){
-    if(size < 100000){
-      result += size;
-    }
+  for(let size of iterSizes(tree)){
+    if(size >= 100000) continue;
+    result += size;
   }
   return result;
 }
+
 function solveB(input: string) {
-  const lines = input.split('\n');
-  let cwd: string[] = [];
-  let listing = false;
-  type Tree = Map<string, Tree | number>;
-  const tree: Tree = new Map();
-  function treeGetCwd(){
-    let t = tree;
-    for(const part of cwd){
-      t = t.get(part) as Tree
-    }
-    return t;
+  const tree = getTreeFromInput(input);
+  const unused = 70_000_000 - sumSubFiles(tree);
+  const delNeeded = 30_000_000 - unused;
+
+  let best = Number.POSITIVE_INFINITY;
+  for(let size of iterSizes(tree)){
+    if(size < delNeeded) continue;
+    if(size > best) continue;
+    best = size;
   }
-
-  for(let ln of lines){
-    if(ln[0] === '$'){
-      const cmd = ln.slice(2)
-      if(cmd === 'ls'){
-        listing = true;
-      } else {
-        const newPlace = cmd.split(' ')[1];
-        if(newPlace === '..'){
-          cwd.pop();
-        } else if(newPlace === '/'){
-          cwd.splice(0, cwd.length);
-        } else {
-          cwd.push(newPlace);
-        }
-      }
-    } else if(listing){
-      const [size, name] = ln.split(' ');
-      if(size === 'dir'){
-        treeGetCwd().set(name, new Map())
-      } else {
-        treeGetCwd().set(name, Number(size))
-      }
-    } else {
-      throw 'bad state'
-    }
-  }
-
-  function sumSubFiles(tree: Tree): number{
-    let size = 0;
-    for(let y of tree.values()){
-      if(typeof y === 'number'){
-        size += y;
-      } else {
-        size += sumSubFiles(y);
-      }
-    }
-    return size;
-  }
-  function* iterSizes(path: string, tree: Tree): Iterable<[string, number]>{
-    for(let [x, y] of tree){
-      if(typeof y !== 'number'){
-        for(let sub of iterSizes(path + '/' + x, y)){
-          yield sub;
-        }
-      }
-    }
-    yield [path, sumSubFiles(tree)];
-  }
-
-
-  const sizes = Array.from(iterSizes('', tree))
-    .sort((a,b)=> b[1]-a[1]);
-
-  const avail = 70000000;
-  const unusedNeeded = 30000000;
-  const unused = avail - sizes[0][1];
-  const delNeeded = unusedNeeded - unused;
-  const ndx = sizes.findIndex(it=> it[1] <= delNeeded);
-  return sizes[ndx - 1][1];
+  return best;
 }
