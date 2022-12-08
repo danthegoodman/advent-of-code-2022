@@ -15,67 +15,41 @@ await aocTest(
 
 function solveA(input: string) {
   const grid = input.split('\n').map(it=> it.split('').map(Number));
-  let count = 0;
-  for(let r = 0; r < grid.length;r++){
-    for(let c = 0;  c < grid[r].length; c++){
-      if(r === 0 || r === grid.length - 1) count ++;
-      else if(c === 0 || c == grid[r].length - 1) count ++;
-      else {
-        const row = grid[r];
-        const col = grid.map(it=> it[c]);
-        const rowBefore = row.slice(0,c);
-        const rowAfter = row.slice(c+1);
-        const colBefore = col.slice(0, r);
-        const colAfter = col.slice(r+1);
-        const consider = [rowBefore, rowAfter, colBefore, colAfter];
-        const val = grid[r][c];
-        const found = consider.find(arr=> arr.every(it=> it < val))
-        if(found){
-          count ++;
-        }
-      }
-    }
-  }
-  return count;
+
+  const counts: number[][] = grid.map((row, r)=> {
+    return row.map((val, c) => {
+      const col = grid.map(it => it[c]);
+      const views = [
+        row.slice(0, c),
+        row.slice(c + 1),
+        col.slice(0, r),
+        col.slice(r + 1),
+      ]
+      const canSeeOut = views.some(arr => arr.every(it => it < val));
+      return canSeeOut ? 1 : 0;
+    });
+  })
+  return counts.flat().reduce((a,b)=> a + b, 0);
 }
+
 function solveB(input: string) {
   const grid = input.split('\n').map(it=> it.split('').map(Number));
-  let max = 0;
-  for(let r = 0; r < grid.length;r++){
-    for(let c = 0;  c < grid[r].length; c++){
-      let score = getScore(r,c);
-      if(score > max){
-        max = score;
-      }
-    }
-  }
-  return max;
 
-  function getScore(r:number,c:number){
-    const row = grid[r];
-    const col = grid.map(it=> it[c]);
-    const val = grid[r][c];
-    const rowBefore = row.slice(0,c).reverse();
-    const rowAfter = row.slice(c+1);
-    const colBefore = col.slice(0, r).reverse();
-    const colAfter = col.slice(r+1);
-    const consider = [rowBefore, rowAfter, colBefore, colAfter].map(arr=>{
-      let newArr = [];
-      for(let i = 0; i< arr.length;i++){
-        const it = arr[i];
-        if(it === val){
-          newArr.push(it);
-          return newArr;
-        }
-        if(it > val){
-          newArr.push(it);
-          return newArr
-        } else {
-          newArr.push(it);
-        }
-      }
-      return newArr;
-    })
-    return consider.map(it=> it.length).reduce((a,b)=> a*b, 1);
-  }
+  const scores = grid.map((row, r)=> {
+    return row.map((val, c) => {
+      const col = grid.map(it=> it[c]);
+      const views = [
+        row.slice(0,c).reverse(),
+        row.slice(c+1),
+        col.slice(0, r).reverse(),
+        col.slice(r+1),
+      ]
+      const distances = views.map(arr=> {
+        const ndx = arr.findIndex(it=> it >= val)
+        return ndx + 1 || arr.length;
+      });
+      return distances.reduce((a,b)=> a*b, 1)
+    });
+  })
+  return Math.max(...scores.flat());
 }
