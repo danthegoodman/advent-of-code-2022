@@ -23,14 +23,9 @@ function solveA(input: string) {
     return c.repeat(Number(n)).split('');
   }).flat();
 
-  const visited = new Set<string>('0,0');
+  const visited = new Set<string>(['0,0']);
   let hr=0,hc=0,tr=0,tc=0;
-  for(let ch of cmds){
-    // const grid = Array.from({length: 5}, ()=> Array.from({length: 6}, ()=>'.'));
-    // grid[tr][tc] = 'T';
-    // grid[hr][hc] = 'H';
-    // console.log(grid.map(r=>r.join('')).reverse().join('\n')+'\n');
-
+  for(const ch of cmds){
     switch(ch){
       case 'R': hc++; break;
       case 'L': hc--; break;
@@ -38,27 +33,16 @@ function solveA(input: string) {
       case 'D': hr--; break;
     }
 
-    let dr = hr - tr;
-    let dc = hc - tc;
+    const dr = hr - tr;
+    const dc = hc - tc;
     if(Math.abs(dr) <= 1 && Math.abs(dc) <= 1) continue;
-    if(dr === 0){
-      tc += Math.floor(dc/2);
-    } else if(dc === 0){
-      tr += Math.floor(dr/2);
-    } else {
-      tr += dr < 0 ? -1 : (dr > 0 ? 1 : 0)
-      tc += dc < 0 ? -1 : (dc > 0 ? 1 : 0)
-    }
-
-    // } else {
-    //     console.log(ch, [hr,hc], [tr,tc])
-    //     break;
-    //   }
-    // break;
+    tr += dr === 0 ? 0 : (dr < 0 ? -1 : 1);
+    tc += dc === 0 ? 0 : (dc < 0 ? -1 : 1);
     visited.add(`${tr},${tc}`)
   }
-  return visited.size - 1;
+  return visited.size;
 }
+
 function solveB(input: string) {
   return input.length;
 }
