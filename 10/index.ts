@@ -1,5 +1,4 @@
 import {aocTest} from "../util/aoc-test.js";
-import _ from 'lodash';
 
 const example = `\
 addx 15
@@ -165,47 +164,45 @@ await aocTest(
 
 function solveA(input: string) {
   const lines = input.split('\n');
-  let c = 20;
-  let x = 1;
   let result = 0;
-  for(let l of lines){
-    if(l === 'noop') {
-      c++;
-      if(c%40 === 0){
-        result += (c-20) * x;
-        // console.log('1',(c-20), x, (c-20) * x)
-      }
-    } else {
-      c += 2;
-      if(c%40 === 1){
-        result += (c-21) * x;
-        // console.log('2',(c-21), x, (c-21) * x)
-      }
-      if(c%40 === 0){
-        result += (c-20) * x;
-        // console.log('3',(c-20), x, (c-20) * x)
-      }
-      x += Number(l.split(' ')[1]);
+  let c = 0;
+  let x = 1;
+  function sampleSignal(){
+    if((c+20)%40 === 0) {
+      result += c * x;
     }
+  }
+
+  for(let l of lines){
+    c++;
+    sampleSignal();
+    if(l === 'noop') continue;
+    c++;
+    sampleSignal();
+    x += Number(l.split(' ')[1]);
   }
   return result;
 }
 
 function solveB(input: string) {
   const lines = input.split('\n');
-  let output = [];
+  const output: string[] = [];
   let c = 0;
   let x = 1;
-  for(let l of lines){
+  function draw(){
     output.push(Math.abs(x - (c%40)) <= 1 ? '#' : '.');
-    // console.log(output);
+    if(c%40 === 39){
+      output.push('\n')
+    }
+  }
+
+  for(let l of lines){
+    draw();
     c++;
     if(l === 'noop') continue;
-
-    output.push(Math.abs(x - (c%40)) <= 1 ? '#' : '.');
-    // console.log(output);
+    draw();
     c++;
     x += Number(l.split(' ')[1]);
   }
-  return _.chunk(output.slice(0,240),40).map(it=>it.join('')).join('\n');
+  return output.slice(0,245).join('');
 }
