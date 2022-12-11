@@ -32,43 +32,24 @@ Monkey 3:
 await aocTest(
   import.meta.url,
   {solveA, solveB},
-  // [example, 10605, null],
   [example, 10605, 2713310158],
 )
 
 function solveA(input: string) {
-  const monkeys = new Map(Array.from(
-    input.matchAll(/^Monkey (\d+):\s+Starting items: (.+)\s+Operation: new = (.*)\s+Test: divisible by (.*)\s+If true: throw to monkey (.*)\s+If false: throw to monkey (.*)\s*/gm),
-    ([,id,items,op, div, trueTo, falseTo]) => {
-      return [id, {
-        items: items.split(', ').map(Number),
-        op,
-        div: Number(div),
-        trueTo,
-        falseTo,
-        inspectCount: 0,
-      }]
-    },
-  ))
-  // console.log(monkeys);
+  const monkeys = parseInput(input);
 
   let round = 0;
-  while(true){
-    console.log(round, Array.from(monkeys.values(), it=> it.items.join(',')))
-    if(round >= 20) break;
+  while(round < 20){
     round ++;
-    // console.log(monkeys);
     for(const m of monkeys.values()){
-      while(true){
-        const worry = m.items.shift();
-        if(worry === undefined) break;
+      while(m.items.length){
         m.inspectCount ++;
-        // console.log('-', worry);
-        let newWorry:number = eval(m.op.replace(/old/g, String(worry))) ;
+
+        const worry = m.items.shift()!;
+        let newWorry: number = eval(m.op.replace(/old/g, String(worry)));
         newWorry = Math.floor(newWorry / 3);
 
         const target = newWorry % m.div === 0 ? m.trueTo : m.falseTo;
-        // console.log(target, worry);
         monkeys.get(target)!.items.push(newWorry);
       }
     }
@@ -80,9 +61,34 @@ function solveA(input: string) {
 }
 
 function solveB(input: string) {
-  const monkeys = new Map(Array.from(
+  const monkeys = parseInput(input);
+  const commonMult = Array.from(monkeys.values(), it=>it.div).reduce((a,b)=>a*b, 1);
+
+  let round = 0;
+  while(round < 10_000){
+    round ++;
+    for(const m of monkeys.values()){
+      while(m.items.length){
+        m.inspectCount ++;
+        const worry = m.items.shift()!;
+        let newWorry:number = eval(m.op.replace(/old/g, String(worry)));
+        newWorry %= commonMult;
+
+        const target = newWorry % m.div === 0 ? m.trueTo : m.falseTo;
+        monkeys.get(target)!.items.push(newWorry);
+      }
+    }
+  }
+
+  const counts = Array.from(monkeys.values(), it=> it.inspectCount)
+    .sort((a,b)=>b-a);
+  return counts[0] * counts[1];
+}
+
+function parseInput(input: string){
+  return new Map(Array.from(
     input.matchAll(/^Monkey (\d+):\s+Starting items: (.+)\s+Operation: new = (.*)\s+Test: divisible by (.*)\s+If true: throw to monkey (.*)\s+If false: throw to monkey (.*)\s*/gm),
-    ([,id,items,op, div, trueTo, falseTo]) => {
+    ([, id, items, op, div, trueTo, falseTo]) => {
       return [id, {
         items: items.split(', ').map(Number),
         op,
@@ -93,35 +99,4 @@ function solveB(input: string) {
       }]
     },
   ))
-
-  const commonMult = Array.from(monkeys.values(), it=>it.div).reduce((a,b)=>a*b, 1);
-  // console.log(monkeys);
-
-  let round = 0;
-  while(true){
-    // console.log(round, Array.from(monkeys.values(), it=> it.items.join(',')))
-    // console.log(round, Array.from(monkeys.values(), it=> it.inspectCount))
-    if(round >= 10_000) break;
-    round ++;
-    console.log(round);
-    // console.log(monkeys);
-    for(const m of monkeys.values()){
-      while(true){
-        let worry = m.items.shift();
-        if(worry === undefined) break;
-        m.inspectCount ++;
-        let newWorry:number = eval(m.op.replace(/old/g, String(worry)));
-        newWorry %= commonMult;
-
-        const target = newWorry % m.div === 0 ? m.trueTo : m.falseTo;
-        // if(target === '2'){
-        //   console.log(worry, newWorry, m.op, m.div);
-        // }
-        monkeys.get(target)!.items.push(newWorry);
-      }
-    }
-  }
-
-  const counts = Array.from(monkeys.values(), it=> it.inspectCount)
-    .sort((a,b)=>b-a);
-  return counts[0] * counts[1];}
+}
